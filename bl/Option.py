@@ -21,9 +21,9 @@ class Option(object):
     def __init__(self, type_of_option, St, K, T, t, sigmma,r=0.02, q=0.02):
         self.type_of_option = type_of_option
         self.St = St
-        self.K = K/252
+        self.K = K
         self.T = T/252
-        self.t = t
+        self.t = t/252
         self.r = r
         self.q = q
         self.sigmma = sigmma
@@ -36,6 +36,7 @@ class Option(object):
         self.tt = self.T - self.t
 
     def _sqrttt(self):
+        print(self.tt)
         self.sqrttt = sqrt(self.tt)
 
     def _R(self):
@@ -59,8 +60,8 @@ class Option(object):
 
 class EuropeanOption(Option):
 
-    def __init__(self, St, K, T, t, r, q, sigmma):
-        Option.__init__(self, "Eu", St, K, T, t, r, q, sigmma)
+    def __init__(self, St, K, T, t, sigmma):
+        Option.__init__(self, "Eu", St, K, T, t,sigmma)
         self.__cal()
 
     def __d1(self):
@@ -113,12 +114,12 @@ class EuropeanOption(Option):
 
 class BarrierOption(Option):
 
-    def __init__(self, St, K, T, t, r, q, sigmma, H):  # H is the barrier
-        Option.__init__(self, "Ba", St, K, T, t, r, q, sigmma)
+    def __init__(self, St, K, T, t, sigmma, H):  # H is the barrier
+        Option.__init__(self, "Ba", St, K, T, t, sigmma)
 
         self.H = H
 
-        self.equivalent = EuropeanOption('Eu_tmp', St, K, T, t, r, q, sigmma)
+        self.equivalent = EuropeanOption(St, K, T, t, sigmma)
 
         self.__cal()
 

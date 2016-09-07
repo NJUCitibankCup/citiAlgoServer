@@ -1,5 +1,16 @@
 from math import exp
 
+'''
+	Yt_1 持仓量
+	delta_t delta的和
+	lower_gamma 风险偏好度(1~500)
+	e 交易成本率,默认0.01
+	upper_gamma 总的gamma
+	St
+	r = 0.02
+	T,t
+
+'''
 def hedge_determine(Yt_1, delta_t, lower_gamma, e, upper_gamma, St, r, T, t):
 	'''
 	return how much to buy/sell or to do nothing. 

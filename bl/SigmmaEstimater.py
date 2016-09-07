@@ -4,6 +4,7 @@ from math import floor
 from math import exp
 import pandas as pd
 import json
+import datetime
 
 class SigmmaEstimater(object):
 
@@ -21,15 +22,16 @@ class SigmmaEstimater(object):
         self.PRICE_DATA_RANGE = (652, 894)
         self.PRICE_DATA_COLUMN = 8
 
-        self.INTERVAL_DIVIDER = 4
-        self.GAP_DIVIDER_o = 3
-        self.GAP_DIVIDER_ab = 3
+        self.INTERVAL_DIVIDER_O = 11
+        self.INTERVAL_DIVIDER_AB = 6
+        self.GAP_DIVIDER_O = 11
+        self.GAP_DIVIDER_AB = 6
 
         self.ORIG_OMEGA_RANGE = (1, 1000000)  # denominated 10e-9
         self.ORIG_ALPHA_RANGE = (-1000, 1000)  # demonicated 10e-6
         self.ORIG_BETA_RANGE = (-1000, 1000)  # denominated 10e-6
-        self.RATE_GAP_TO_INTERVAL_O = 20
-        self.RATE_GAP_TO_INTERVAL_AB = 15
+        self.NUM_O = 20
+        self.NUM_AB = 10
         self.SEED = (((self.ORIG_OMEGA_RANGE[1] - self.ORIG_OMEGA_RANGE[0]) // 2,
                  (self.ORIG_ALPHA_RANGE[1] - self.ORIG_ALPHA_RANGE[0]) // 2,
                  (self.ORIG_BETA_RANGE[1] - self.ORIG_BETA_RANGE[0]) // 2), 0.0)
@@ -37,8 +39,8 @@ class SigmmaEstimater(object):
         self.interval_o = mp.Value('i', (self.ORIG_OMEGA_RANGE[1] - self.ORIG_OMEGA_RANGE[0]) // 2)
         self.interval_ab = mp.Value('i', (self.ORIG_ALPHA_RANGE[1] - self.ORIG_ALPHA_RANGE[0]) // 2)
 
-        self.gap_o = mp.Value('i', self.interval_o.value // self.RATE_GAP_TO_INTERVAL_O)
-        self.gap_ab = mp.Value('i', self.interval_ab.value // self.RATE_GAP_TO_INTERVAL_AB)
+        self.gap_o = mp.Value('i', self.interval_o.value // self.NUM_O)
+        self.gap_ab = mp.Value('i', self.interval_ab.value // self.NUM_AB)
 
         self.result_o = mp.Value('i', 0)
         self.result_a = mp.Value('i', 0)
@@ -93,20 +95,27 @@ class SigmmaEstimater(object):
             alpha_interval = self.boarder_decider(self.ORIG_ALPHA_RANGE, (alpha - self.interval_t_ab, alpha + self.interval_t_ab))
             beta_interval = self.boarder_decider(self.ORIG_BETA_RANGE, (beta - self.interval_t_ab, beta + self.interval_t_ab))
 
-            omega_dots_list = []
-            if self.gap_o.value == 0:
-                omega_dots_list.append(omega)
-            else:
-                omega_dots_list = self.dots_generator(omega_interval, self.gap_o.value)
+            omega_dots_list = [omega]  # !!!!!!
+            alpha_dots_list = [alpha]  # !!!!!!
+            beta_dots_list = [beta]  # !!!!!!
 
-            alpha_dots_list = []
-            beta_dots_list = []
-            if self.gap_ab.value == 0:
-                alpha_dots_list.append(alpha)
-                beta_dots_list.append(beta)
-            else:
-                alpha_dots_list = self.dots_generator(alpha_interval, self.gap_ab.value)
-                beta_dots_list = self.dots_generator(beta_interval, self.gap_ab.value)
+            omega_dots_list = self.dots_generator(omega_interval, self.gap_o.value)  # !!!!!!
+            alpha_dots_list = self.dots_generator(alpha_interval, self.gap_ab.value)  # !!!!!!
+            beta_dots_list = self.dots_generator(beta_interval, self.gap_ab.value)  # !!!!!!
+            # omega_dots_list = []
+            # if self.gap_o.value == 0:
+            #     omega_dots_list.append(omega)
+            # else:
+            #     omega_dots_list = self.dots_generator(omega_interval, self.gap_o.value)
+            #
+            # alpha_dots_list = []
+            # beta_dots_list = []
+            # if self.gap_ab.value == 0:
+            #     alpha_dots_list.append(alpha)
+            #     beta_dots_list.append(beta)
+            # else:
+            #     alpha_dots_list = self.dots_generator(alpha_interval, self.gap_ab.value)
+            #     beta_dots_list = self.dots_generator(beta_interval, self.gap_ab.value)
 
             # to put (omega, alpha, beta) into queue
             #-----------------------------------------------------------------
@@ -124,13 +133,19 @@ class SigmmaEstimater(object):
 
             # to reduce the interval and gap
             #----------------------------------------------------------------
-            self.interval_o.value //= self.INTERVAL_DIVIDER
-            self.interval_ab.value //= self.INTERVAL_DIVIDER
+            # self.interval_o.value //= self.INTERVAL_DIVIDER_O
+            # self.interval_ab.value //= self.INTERVAL_DIVIDER_AB
+            #
+            # self.gap_o.value = max(self.gap_o.value // self.GAP_DIVIDER_o, 0)
+            # self.gap_ab.value = max(self.gap_ab.value // self.GAP_DIVIDER_ab, 0)
+            #
+            # self.event_start_produce.clear()
 
-            self.gap_o.value = max(self.gap_o.value // self.GAP_DIVIDER_o, 0)
-            self.gap_ab.value = max(self.gap_ab.value // self.GAP_DIVIDER_ab, 0)
+            self.interval_o.value //= self.INTERVAL_DIVIDER_O  # !!!!!!
+            self.interval_ab.value //= self.INTERVAL_DIVIDER_AB  # !!!!!!
 
-            self.event_start_produce.clear()
+            self.gap_o.value = max(self.gap_o.value // self.GAP_DIVIDER_O, 1)  # !!!!!!
+            self.gap_ab.value = max(self.gap_ab.value // self.GAP_DIVIDER_AB, 1)  # !!!!!!
 
 
     def calculator_consumer(self):
@@ -170,18 +185,24 @@ class SigmmaEstimater(object):
             self.queue_inter.put(((omega, alpha, beta), sumi))
 
     def subscriber_consumer2(self):
+        history_large_set = ((0, 0, 0), 0.0)  # !!!!!!
         while 1:
             self.event_start_consume2.wait()
             target_set = self.SEED
             count = 1
             total = self.total_length_of_queue_toconsume.value
-            print("total_length_get:%d" % total)
             while count <= total:
                 this_set = self.queue_inter.get()
                 count += 1
                 if this_set[1] > target_set[1]:
                     target_set = this_set
-            self. queue_toproduce.put(target_set)
+
+            if target_set[1] > history_large_set[1]:  # !!!!!!
+                self.queue_toproduce.put(target_set)  # !!!!!!
+                history_large_set = target_set  # !!!!!!
+            else:  # !!!!!!
+                self.queue_toproduce.put(history_large_set)  # !!!!!!
+
             self.event_start_consume2.clear()
             self.event_start_produce.set()
 
@@ -221,8 +242,12 @@ class SigmmaEstimater(object):
 
 if __name__ == "__main__":
 
-    with open('test_list.json', 'r') as f:
-        test_list = json.load(f)
+    before = datetime.datetime.now()
+    # with open('test_list.json', 'r') as f:
+    #     test_list = json.load(f)
+    test_list = [4009, 4066, 4014, 3933, 3976, 3934, 3862, 3882, 3870, 3855, 3867, 3829, 3820, 3810, 3839, 3835, 3842, 3796, 3792, 3731, 3697, 3709, 3690, 3715, 3748, 3749, 3714, 3732, 3714, 3733, 3772, 3774, 3774, 3766, 3798, 3803, 3812, 3786, 3760, 3783, 3789, 3792, 3794, 3760, 3756, 3774, 3795, 3788, 3810, 3818, 3837, 3813, 3815, 3799, 3821, 3833, 3837, 3813, 3825, 3831, 3852, 3879, 3880, 3915, 3924, 3948, 3937, 3955, 3928, 3951, 3969, 3985, 3995, 3993, 3969, 3940, 3957, 3965, 3963, 4006, 3995, 3923, 3944, 3936, 3958, 3952, 3933, 3851, 3856, 3842, 3851, 3866, 3879, 3856, 3862, 3868, 3878, 3844, 3821, 3818, 3831, 3844, 3788, 3806, 3784, 3807, 3798, 3829, 3830, 3868, 3867, 3862, 3861, 3845, 3854, 3851, 3821, 3819, 3827, 3825, 3804, 3811, 3848, 3854, 3861, 3844, 3843, 3857, 3882, 3871, 3875, 3883, 3871, 3883, 3894, 3870, 3865, 3883, 3905, 3956, 3950, 3946, 3928, 3919, 3965, 3944, 3938, 3935, 3962, 3989, 3974, 3996, 3957, 3901, 3894, 3885, 3866, 3871, 3887, 3922, 3879, 3870, 3867, 3885, 3928, 3934, 3942, 3903, 3889, 3882, 3884, 3887, 3885, 3886, 3984, 3955, 4034, 3994, 3984, 3975, 3957, 4113, 4080, 4094, 4108, 4106, 4070, 4075, 4059, 4117, 4109, 4156, 4141, 4092, 4074, 4043, 4092, 4093, 4100, 4130, 4221, 4244, 4241, 4296, 4300, 4197, 4164, 4134, 4001, 3999, 4017, 3990, 3997, 4009, 4015, 3980, 3957, 3955, 3964, 3991, 3999, 4013, 3980, 3963, 3968, 3962, 3966, 3980, 3963, 3949, 3951, 3960, 3950, 3944, 3941, 3976, 3990, 3995, 3997, 4003, 4040, 4006]
 
     print(SigmmaEstimater(test_list).estimate_args())
+    after = datetime.datetime.now()
 
+    print("delta time : "+str((after-before).seconds))
