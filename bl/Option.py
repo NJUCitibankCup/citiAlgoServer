@@ -22,8 +22,8 @@ class Option(object):
         self.type_of_option = type_of_option
         self.St = St
         self.K = K
-        self.T = T/252
-        self.t = t/252
+        self.T = T
+        self.t = t
         self.r = r
         self.q = q
         self.sigmma = sigmma
