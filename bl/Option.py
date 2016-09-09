@@ -36,7 +36,7 @@ class Option(object):
         self.tt = self.T - self.t
 
     def _sqrttt(self):
-        print(self.tt)
+        # print(self.tt)
         self.sqrttt = sqrt(self.tt)
 
     def _R(self):

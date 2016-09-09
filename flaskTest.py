@@ -3,7 +3,8 @@ from bl.Option import *
 from OptionResult import OptionResult
 from bl.DeltaDateComputer import DeltaDateComputer
 from bl.SigmmaEstimater import SigmmaEstimater
-from bl.HedgeCriteria_2 import hedge_determine
+from bl.HedgeCriteria import hedge_determine
+from bl.VarGraphDrawer import VarGraphDrawer
 
 app = Flask(__name__)
 
@@ -45,6 +46,28 @@ def hedgeCriteria():
     T,t = DeltaDateComputer.compute(startDateString,endDateString)
     return str(hedge_determine(Yt_1,delta_t,lower_gamma,upper_gamma,St,T,t))
 
+@app.route("/varGraph",methods=["POST"])
+def drawVarGraph():
+    optionListJson = request.form["optionList"]
+    optionDataList = json.loads(optionListJson)
+
+    optionList = []
+    for data in optionDataList:
+        St, K, T, t, sigmma = __convertArgsFromMap(data)
+        option = None
+        if "H" in data.keys():
+            H = float(data["H"])
+            option = BarrierOption(St, K, T, t, sigmma,H)
+        else:
+            option = EuropeanOption(St,K,T,t,sigmma)
+
+        optionList.append(option)
+    print([i.St for i in optionList])
+    lower_gamma_lst, var_list = VarGraphDrawer().compute(optionList)
+
+    result = {"lowerGammaList":lower_gamma_lst,"varList":var_list}
+    return jsonify(result)
+
 @app.route("/option/Eu")
 def computeEu():
     St, K, T, t, sigmma = __convertOptionArgs()
@@ -59,13 +82,16 @@ def computeBa():
     return jsonify(OptionResult.getResult(option))
 
 def __convertOptionArgs():
-    St = float(request.args["St"])
-    K = float(request.args["K"])
-    startDateString = request.args["startDate"]
-    endDateString = request.args["endDate"]
-    sigmma = float(request.args["sigmma"])
+    return __convertArgsFromMap(request.args)
+
+def __convertArgsFromMap(argMap):
+    St = float(argMap["St"])
+    K = float(argMap["K"])
+    startDateString = argMap["startDate"]
+    endDateString = argMap["endDate"]
+    sigmma = float(argMap["sigmma"])
     T, t = DeltaDateComputer.compute(startDateString, endDateString)
-    return (St,K,T,t,sigmma)
+    return (St, K, T, t, sigmma)
 
 if __name__ == "__main__":
     app.run(debug=True)
