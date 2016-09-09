@@ -11,7 +11,7 @@ from math import exp
 	T,t
 
 '''
-def hedge_determine(Yt_1, delta_t, lower_gamma, e, upper_gamma, St, r, T, t):
+def hedge_determine(Yt_1, delta_t, lower_gamma, upper_gamma, St,  T, t,r=0.02,e=0.01):
 	'''
 	return how much to buy/sell or to do nothing. 
 	Which is worthy of noticing is that the upper_gamma is a

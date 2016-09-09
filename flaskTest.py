@@ -3,6 +3,7 @@ from bl.Option import *
 from OptionResult import OptionResult
 from bl.DeltaDateComputer import DeltaDateComputer
 from bl.SigmmaEstimater import SigmmaEstimater
+from bl.HedgeCriteria_2 import hedge_determine
 
 app = Flask(__name__)
 
@@ -22,10 +23,27 @@ def testDelta():
 
 @app.route("/option/sigmma",methods=["POST"])
 def computeSigmma():
+    # priceList = request.form.getlist("priceList")
     priceListJson = request.form["priceList"]
     priceList = json.loads(priceListJson)
+    print(priceList)
     return str(SigmmaEstimater(priceList).estimate())
     # return str(3.2)
+
+@app.route("/hedge")
+def hedgeCriteria():
+    # Yt_1, delta_t, lower_gamma, upper_gamma, St, T, t
+    print(request.args)
+    Yt_1 = int(request.args["number"])
+    delta_t = float(request.args["totalDelta"])
+    lower_gamma = float(request.args["lowerGamma"])
+    upper_gamma = float(request.args["upperGamma"])
+    St = float(request.args["St"])
+    startDateString = request.args["startDate"]
+    endDateString = request.args["endDate"]
+
+    T,t = DeltaDateComputer.compute(startDateString,endDateString)
+    return str(hedge_determine(Yt_1,delta_t,lower_gamma,upper_gamma,St,T,t))
 
 @app.route("/option/Eu")
 def computeEu():
