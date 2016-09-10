@@ -31,7 +31,7 @@ def computeSigmma():
     return str(SigmmaEstimater(priceList).estimate())
     # return str(3.2)
 
-@app.route("/hedge")
+@app.route("/option/hedge")
 def hedgeCriteria():
     # Yt_1, delta_t, lower_gamma, upper_gamma, St, T, t
     print(request.args)
@@ -46,7 +46,7 @@ def hedgeCriteria():
     T,t = DeltaDateComputer.compute(startDateString,endDateString)
     return str(hedge_determine(Yt_1,delta_t,lower_gamma,upper_gamma,St,T,t))
 
-@app.route("/varGraph",methods=["POST"])
+@app.route("/option//varGraph",methods=["POST"])
 def drawVarGraph():
     optionListJson = request.form["optionList"]
     optionDataList = json.loads(optionListJson)
