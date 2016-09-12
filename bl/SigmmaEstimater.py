@@ -47,7 +47,7 @@ class SigmmaEstimater(object):
         self.result_b = mp.Value('i', 0)
         self.result_s = mp.Value('d', 0.0)
 
-        self.price_list = price_list
+        self.price_list = [i for i in price_list if i > 0];
         self.u_list = []
         for i in range(len(self.price_list)):
             if i == 0:

@@ -39,14 +39,14 @@ def hedgeCriteria():
     delta_t = float(request.args["totalDelta"])
     lower_gamma = float(request.args["lowerGamma"])
     upper_gamma = float(request.args["upperGamma"])
-    St = float(request.args["St"])
+    St = float(request.args["st"])
     startDateString = request.args["startDate"]
     endDateString = request.args["endDate"]
 
     T,t = DeltaDateComputer.compute(startDateString,endDateString)
     return str(hedge_determine(Yt_1,delta_t,lower_gamma,upper_gamma,St,T,t))
 
-@app.route("/option//varGraph",methods=["POST"])
+@app.route("/option/varGraph",methods=["POST"])
 def drawVarGraph():
     optionListJson = request.form["optionList"]
     optionDataList = json.loads(optionListJson)
@@ -56,7 +56,7 @@ def drawVarGraph():
         St, K, T, t, sigmma = __convertArgsFromMap(data)
         option = None
         if "H" in data.keys():
-            H = float(data["H"])
+            H = float(data["h"])
             option = BarrierOption(St, K, T, t, sigmma,H)
         else:
             option = EuropeanOption(St,K,T,t,sigmma)
@@ -77,7 +77,7 @@ def computeEu():
 @app.route("/option/Ba")
 def computeBa():
     St, K, T, t, sigmma = __convertOptionArgs()
-    H = float(request.args["H"])
+    H = float(request.args["h"])
     option = BarrierOption(St, K, T, t, sigmma,H)
     return jsonify(OptionResult.getResult(option))
 
@@ -85,8 +85,8 @@ def __convertOptionArgs():
     return __convertArgsFromMap(request.args)
 
 def __convertArgsFromMap(argMap):
-    St = float(argMap["St"])
-    K = float(argMap["K"])
+    St = float(argMap["st"])
+    K = float(argMap["k"])
     startDateString = argMap["startDate"]
     endDateString = argMap["endDate"]
     sigmma = float(argMap["sigmma"])
