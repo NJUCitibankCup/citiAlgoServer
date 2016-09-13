@@ -5,6 +5,7 @@ from bl.DeltaDateComputer import DeltaDateComputer
 from bl.SigmmaEstimater import SigmmaEstimater
 from bl.HedgeCriteria import hedge_determine
 from bl.VarGraphDrawer import VarGraphDrawer
+import sys
 
 app = Flask(__name__)
 
@@ -94,4 +95,8 @@ def __convertArgsFromMap(argMap):
     return (St, K, T, t, sigmma)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    #如果没有其他参数就是debug模式运行,如果有参数就是生产环境运行
+    if len(sys.argv) == 1:
+        app.run(debug=True)
+    else:
+        app.run(host="0.0.0.0")
