@@ -70,10 +70,7 @@ class SigmmaEstimater(object):
             self.event_start_produce.wait()
 
             if self.interval_o.value == 0 and self.interval_ab.value == 0:
-                print("ready to end.")
-                print(self.queue_toconsume.qsize())
                 if self.queue_toproduce.qsize() == 1:
-                    print("finish")
                     to_return = self.queue_toproduce.get()
                     self.result_o.value, self.result_a.value, self.result_b.value = to_return[0]
                     self.result_s.value = to_return[1]
@@ -120,9 +117,6 @@ class SigmmaEstimater(object):
             # to put (omega, alpha, beta) into queue
             #-----------------------------------------------------------------
             self.total_length_of_queue_toconsume.value = len(omega_dots_list) * len(alpha_dots_list) * len(beta_dots_list)
-            print("total length:" + str(self.total_length_of_queue_toconsume.value))
-            print("intervals:"+str((self.interval_o.value, self.interval_ab.value)))
-            print("gaps:"+str((self.gap_o.value, self.gap_ab.value)))
 
             self.event_start_consume2.set()
             for i in omega_dots_list:
@@ -237,7 +231,7 @@ class SigmmaEstimater(object):
         for i in consumer_1:
             i.terminate()
         consumer_2.terminate()
-
+        print("estimate end")
         return sigmma
 
 if __name__ == "__main__":
